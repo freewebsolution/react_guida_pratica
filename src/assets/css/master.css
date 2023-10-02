@@ -1,0 +1,10 @@
+*::-webkit-scrollbar {
+    display: none;
+}
+.avatar {
+    height: 35px !important;
+    border-radius: 50px !important;
+}
+.shadow-1{
+    box-shadow:inset-1px 00 rgba(0,0,0,0.1);
+}
