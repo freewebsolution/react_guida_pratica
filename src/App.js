@@ -5,6 +5,9 @@ import User from "./components/User";
 import ListNames from "./components/ListNames";
 import TodoList from "./components/TodoList";
 import { useState } from "react";
+import TodoCreator from "./components/TodoCreator";
+import { v4 as uuid } from "uuid";
+import NoListView from "./components/NoListView";
 
 const user = {
   name: "Lucio",
@@ -12,36 +15,62 @@ const user = {
   image: "https://github.com/freewebsolution.png",
 };
 
-const allTodos = [
+const initialTodos = [
   { listId: 2, id: 1, done: false, text: "Prima attività" },
   { listId: 2, id: 2, done: true, text: "Seconda attività" },
   { listId: 2, id: 3, done: false, text: "Terza attività" },
 ];
 
-const lists = [
+const initialLists = [
   { id: 1, name: "Importante", undone_count: 0 },
   { id: 2, name: "Film da vedere", undone_count: 2 },
   { id: 3, name: "Libri da leggere", undone_count: 0 },
 ];
 
 function App() {
-
   const [listIdx, setListIdx] = useState(-1);
   const [todos, setTodos] = useState([]);
+  const [allTodos, setAllTodos] = useState(initialTodos);
+  const [allLists, setAllLists] = useState(initialLists)
 
   const selectListByIdx = (idx) => {
     setListIdx(idx);
-    setTodos(allTodos.filter((t) => t.listId === lists[idx].id));
+    setTodos(allTodos.filter((t) => t.listId === allLists[idx].id));
+  };
+
+  const handleCreateTodo = (text) => {
+    const newTodo = {
+      listid: allLists[listIdx].id,
+      id: uuid,
+      done: false,
+      text: text,
+    };
+    setAllTodos([...allTodos, newTodo]);
+    setTodos([...todos, newTodo]);
+    const tmpList = [...allLists];
+    tmpList[listIdx].undone_count++;
+    setAllLists(tmpList);
   };
   return (
     <Layout>
       <LeftCol>
         <User name={user.name} image={user.image} />
         <hr />
-        <ListNames lists={lists} selectedListIdx={listIdx} onListClick={selectListByIdx} />
+        <ListNames
+          lists={allLists}
+          selectedListIdx={listIdx}
+          onListClick={selectListByIdx}
+        />
       </LeftCol>
       <RightCol>
-        <TodoList todos={todos} />
+        {listIdx === -1 ? (
+          <NoListView />
+        ) : (
+          <>
+            <TodoList todos={todos} />
+            <TodoCreator onCreate={handleCreateTodo} />
+          </>
+        )}
       </RightCol>
     </Layout>
   );
