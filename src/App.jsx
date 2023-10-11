@@ -31,7 +31,7 @@ function App() {
   const [listIdx, setListIdx] = useState(-1);
   const [todos, setTodos] = useState([]);
   const [allTodos, setAllTodos] = useState(initialTodos);
-  const [allLists, setAllLists] = useState(initialLists)
+  const [allLists, setAllLists] = useState(initialLists);
 
   const selectListByIdx = (idx) => {
     setListIdx(idx);
@@ -40,16 +40,29 @@ function App() {
 
   const handleCreateTodo = (text) => {
     const newTodo = {
-      listid: allLists[listIdx].id,
-      id: uuid,
+      listId: allLists[listIdx].id,
+      id: uuid(),
       done: false,
       text: text,
     };
     setAllTodos([...allTodos, newTodo]);
     setTodos([...todos, newTodo]);
-    const tmpList = [...allLists];
-    tmpList[listIdx].undone_count++;
-    setAllLists(tmpList);
+
+  };
+
+  const handleUpdateTodo = (id, data) => {
+    const todoIdx = allTodos.findIndex((t) => t.id === id);
+    const preTodo = allTodos[todoIdx];
+    const updatedTodo = {
+      ...preTodo,
+      ...data,
+    };
+
+    const tmpTodos = [...allTodos];
+    tmpTodos[todoIdx] = updatedTodo;
+    setAllTodos(tmpTodos);
+    setTodos(tmpTodos.filter((t) => t.listId === updatedTodo.listId));
+
   };
   return (
     <Layout>
@@ -67,7 +80,7 @@ function App() {
           <NoListView />
         ) : (
           <>
-            <TodoList todos={todos} />
+            <TodoList todos={todos} onTodoUpdate={handleUpdateTodo} />
             <TodoCreator onCreate={handleCreateTodo} />
           </>
         )}
