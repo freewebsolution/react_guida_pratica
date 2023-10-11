@@ -3,7 +3,7 @@ import { ReactComponent as ListIcon } from "bootstrap-icons/icons/list-ul.svg";
 
 const navLinkStyle = { cursor: "pointer" };
 
-function ListItem({ isSelected, name, count }) {
+function ListItem({ isSelected, name, count,onClick }) {
   const textColor = isSelected ? "text-white" : "text-black";
   return (
     <li
@@ -11,6 +11,7 @@ function ListItem({ isSelected, name, count }) {
         isSelected ? "active" : ""
       }`}
       style={navLinkStyle}
+      onClick= {onClick}
     >
       <ListIcon /> <span className={`${textColor} ms-2`}>{name}</span>
       <small className={`${textColor} fw-lighter ms-auto`}>{count}</small>
@@ -18,12 +19,22 @@ function ListItem({ isSelected, name, count }) {
   );
 }
 
-const ListNames = ({ lists, selectedListIdx }) => {
+const ListNames = ({ lists, selectedListIdx, onListClick }) => {
   return (
     <ul className="nav nav-pills flex-column mb-auto">
-      {lists.map((t, idx) => (
-        <ListItem key={idx} name={t.name} count={t.undone_count} />
-      ))}
+      {lists.map((t, idx) => {
+        return (
+          <ListItem
+            key={idx}
+            isSelected={selectedListIdx === idx}
+            name={t.name}
+            count={t.undone_count}
+            onClick={() => {
+              onListClick(idx);
+            }}
+          />
+        );
+      })}
     </ul>
   );
 };
