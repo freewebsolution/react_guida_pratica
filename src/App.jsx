@@ -47,6 +47,7 @@ function App() {
     };
     setAllTodos([...allTodos, newTodo]);
     setTodos([...todos, newTodo]);
+   addToListCount(listIdx,1);
 
   };
 
@@ -63,7 +64,30 @@ function App() {
     setAllTodos(tmpTodos);
     setTodos(tmpTodos.filter((t) => t.listId === updatedTodo.listId));
 
+    const isTodoStatusChanged = preTodo.done !== updatedTodo.done;
+    if(isTodoStatusChanged){
+     addToListCount(listIdx,preTodo.done ? 1 : -1)
+    }
+
   };
+
+  const handleDeleteTodo = (id) => {
+    const todoIdx = todos.findIndex((t) => t.id === id);
+    const todo = todos[todoIdx];
+
+    const tmpTodos = [...todos];
+    tmpTodos.splice(todoIdx, 1);
+    setTodos(tmpTodos);
+
+    addToListCount(listIdx, todo.done ? 0 : -1);
+  };
+
+  const addToListCount = (listIdx, num) => {
+    const tmpLists = [...allLists];
+    tmpLists[listIdx] = {...tmpLists[listIdx]};
+    tmpLists[listIdx].undone_count += num;
+    setAllLists(tmpLists);
+  }
   return (
     <Layout>
       <LeftCol>
@@ -80,7 +104,7 @@ function App() {
           <NoListView />
         ) : (
           <>
-            <TodoList todos={todos} onTodoUpdate={handleUpdateTodo} />
+            <TodoList todos={todos} onTodoUpdate={handleUpdateTodo} onTodoDelete={handleDeleteTodo}/>
             <TodoCreator onCreate={handleCreateTodo} />
           </>
         )}

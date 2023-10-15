@@ -1,16 +1,15 @@
-import React from "react";
 import TodoItem from "./TodoItem";
 
-
-const TodoList = ({todos, onTodoUpdate}) => {
-  const todoItems = todos.map((t, idx) => (
-    <TodoItem key={idx} done={t.done} text={t.text} updateTodo= {onTodoUpdate} />
+export default function TodoList({ todos, onTodoUpdate, onTodoDelete }) {
+  const todoItems = todos.map((t) => (
+    <TodoItem
+      key={t.id}
+      id={t.id}
+      done={t.done}
+      text={t.text}
+      updateTodo={onTodoUpdate}
+      deleteTodo={onTodoDelete}
+    />
   ));
-  return (
-    <ul className="list-group pb-3">
-      {todoItems}
-    </ul>
-  );
-};
-
-export default TodoList;
+  return <ul className="list-group pb-3">{todoItems}</ul>;
+}

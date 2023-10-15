@@ -1,19 +1,34 @@
-import React from "react";
+import { useState } from "react";
+import ButtonDelete from "./ButtonDelete";
+import InlineDeleteModal from "./InlineDeleteModal";
 import StatusCheckbox from "./StatusCheckbox";
 import TodoText from "./TodoText";
-import ButtonDelete from "./ButtonDelete";
 
 const todoClasses =
-  "d-flex align-items-center list-group-item border rounded-1 my-1";
+  "d-flex align-items-center list-group-item my-1 border rounded-1";
 
-const TodoItem = ({ id,done, text,updateTodo }) => {
+export default function TodoItem({ id, done, text, updateTodo, deleteTodo }) {
+  const [delModal, setDelModal] = useState(false);
+
   return (
     <li className={todoClasses}>
-      <StatusCheckbox done={done} onChange={() => updateTodo(id,{done:!done})} />
-      <TodoText done={done} text={text} />
-      <ButtonDelete/>
+      <StatusCheckbox
+        done={done}
+        onChange={() => updateTodo(id, { done: !done })}
+      />
+      <TodoText
+        done={done}
+        text={text}
+        onChange={(newText) => updateTodo(id, { text: newText })}
+      />
+      <ButtonDelete onClick={() => setDelModal(true)} />
+
+      {delModal && (
+        <InlineDeleteModal
+          onDelete={() => deleteTodo(id)}
+          onCancel={() => setDelModal(false)}
+        />
+      )}
     </li>
   );
-};
-
-export default TodoItem;
+}
