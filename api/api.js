@@ -7,8 +7,8 @@ const { randomUUID: uuid } = require("crypto"); // >= v15.6.0, v14.17.0
 fastify.get("/api/user", async (request, reply) => {
   return {
     id: 1,
-    name: "Alessandro",
-    image: "https://github.com/lifeisfoo.png",
+    name: "Lucio",
+    image: "https://github.com/freewebsolution.png",
   };
 });
 

@@ -1,12 +1,12 @@
 {
-    "name": "example-todo-api",
+    "name": "todo-api",
     "version": "1.0.1",
     "description": "",
     "main": "api.js",
     "bin": {
       "example-todo-api": "./api.js"
     },
-    "author": "Alessandro Miliucci",
+    "author": "Lucio Ticali",
     "license": "ISC",
     "dependencies": {
       "fastify": "^4.10.2"
