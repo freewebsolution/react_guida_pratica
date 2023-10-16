@@ -1,7 +1,7 @@
 import React from "react";
 import { ReactComponent as TrashIcon } from "bootstrap-icons/icons/trash.svg";
 
-export default function ButtonDelete({onClick}) {
+export default function DeleteButton({onClick}) {
   return (
     <button
     onClick={onClick}

@@ -1,7 +1,7 @@
 const defaultImage = "https://via.placeholder.com/32x32.png";
 
 
-const getiamgeOrDeafault = (imageurl) => {
+const getImageOrDefault = (imageurl) => {
     try {
         new URL(imageurl);
         return imageurl;
@@ -10,5 +10,5 @@ const getiamgeOrDeafault = (imageurl) => {
     }
 }
 
-export {getiamgeOrDeafault}
+export {getImageOrDefault}
 

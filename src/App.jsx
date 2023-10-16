@@ -6,6 +6,7 @@ import { v4 as uuid } from "uuid";
 import { NoListView } from "./components/NoListView";
 import ListView from "./components/ListView";
 import '../src/assets/css/master.css';
+import NewListButton from "./components/NewListButton";
 
 const user = {
   id: 1,
@@ -86,10 +87,33 @@ export default function App() {
     addToListCount(listIdx, todo.done ? 0 : -1);
   };
 
+  const handlecreateList = () => {
+    const newList = {id:uuid(), name:"Nuovo elenco",undone_count:0};
+    setAllLists([...allLists,newList]);
+    setListIdx(allLists.length);
+  }
+
+  const handleDeleteList =(id) => {
+    const listIdx = allLists.findIndex((l) => l.id === id);
+    const tmpLists = [...allLists];
+    tmpLists.splice(listIdx,1);
+    setAllLists(tmpLists);
+    setListIdx(-1);
+  }
+
+  const handleUpdatelistName = (id,name) => {
+    const listIdx = allLists.findIndex((l)=> l.id === id);
+    const tmpLists = [...allLists];
+    tmpLists[listIdx].name = name;
+    setAllLists(tmpLists);
+  }
+
   return (
     <Layout>
       <LeftCol>
-        <User name={user.name} image={user.image} />
+        <User name={user.name} image={user.image}>
+        <NewListButton onCreateList={handlecreateList}/>
+        </User>
         <hr />
         <ListNames
           lists={allLists}
@@ -102,10 +126,13 @@ export default function App() {
           <NoListView />
         ) : (
           <ListView
+            list={allLists[listIdx]}
             todos={todos}
             onTodoCreate={handleCreateTodo}
             onTodoDelete={handleDeleteTodo}
             onTodoUpdate={handleUpdateTodo}
+            onListDelete={handleDeleteList}
+            onListNameUpdate={handleUpdatelistName}
           />
         )}
       </RightCol>

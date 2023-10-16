@@ -5,6 +5,12 @@ import App from './App';
 import reportWebVitals from './reportWebVitals';
 import "bootstrap/dist/css/bootstrap.css";
 import "bootstrap/dist/js/bootstrap.js"
+import ReactModal from 'react-modal';
+const rootId = "root";
+
+ReactModal.setAppElement(`#${rootId}`);
+ReactModal.defaultStyles.content.background = "none";
+ReactModal.defaultStyles.content.border = "none"
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(

@@ -1,15 +1,16 @@
 import React from 'react';
-import {getiamgeOrDeafault} from '../utility/utility.js'
+import {getImageOrDefault} from '../utility/utility.js'
 
-const User = ({name,image}) => {
+export default function User({ name, image, children }) {
     return (
-        <div className='d-flex align-items-center text-black-decoration-none py-1'>
-            <p>
-            <img className='img-thumbnail me-1 avatar'  src={getiamgeOrDeafault(image)} alt='user.name'/>
-                <strong> {name}</strong>
-            </p>
-        </div>
+      <div className="d-flex align-items-center text-black text-decoration-none py-1">
+        <img
+          src={getImageOrDefault(image)}
+          className="avatar me-2"
+          alt=''
+        />
+        <strong>{name}</strong>
+        {children}
+      </div>
     );
-};
-
-export default User;
+  }
