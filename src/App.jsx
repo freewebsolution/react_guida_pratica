@@ -1,25 +1,17 @@
-import "./App.css";
-import "./assets/css/master.css";
-import Layout, { LeftCol, RightCol } from "./components/Layout";
-import User from "./components/User";
-import ListNames from "./components/ListNames";
-import TodoList from "./components/TodoList";
 import { useState } from "react";
-import TodoCreator from "./components/TodoCreator";
+import Layout, { LeftCol, RightCol } from "./components/Layout";
+import ListNames from "./components/ListNames";
+import User from "./components/User";
 import { v4 as uuid } from "uuid";
-import NoListView from "./components/NoListView";
+import { NoListView } from "./components/NoListView";
+import ListView from "./components/ListView";
+import '../src/assets/css/master.css';
 
 const user = {
-  name: "Lucio",
   id: 1,
+  name: "Lucio",
   image: "https://github.com/freewebsolution.png",
 };
-
-const initialTodos = [
-  { listId: 2, id: 1, done: false, text: "Prima attività" },
-  { listId: 2, id: 2, done: true, text: "Seconda attività" },
-  { listId: 2, id: 3, done: false, text: "Terza attività" },
-];
 
 const initialLists = [
   { id: 1, name: "Importante", undone_count: 0 },
@@ -27,15 +19,28 @@ const initialLists = [
   { id: 3, name: "Libri da leggere", undone_count: 0 },
 ];
 
-function App() {
+const initialTodos = [
+  { listId: 2, id: 1, done: false, text: "Prima attività" },
+  { listId: 2, id: 2, done: true, text: "Seconda attività" },
+  { listId: 2, id: 3, done: false, text: "Terza attività" },
+];
+
+export default function App() {
+  const [allLists, setAllLists] = useState(initialLists);
+  const [allTodos, setAllTodos] = useState(initialTodos);
   const [listIdx, setListIdx] = useState(-1);
   const [todos, setTodos] = useState([]);
-  const [allTodos, setAllTodos] = useState(initialTodos);
-  const [allLists, setAllLists] = useState(initialLists);
 
   const selectListByIdx = (idx) => {
     setListIdx(idx);
     setTodos(allTodos.filter((t) => t.listId === allLists[idx].id));
+  };
+
+  const addToListCount = (listIdx, num) => {
+    const tmpLists = [...allLists];
+    tmpLists[listIdx] = { ...tmpLists[listIdx] };
+    tmpLists[listIdx].undone_count += num;
+    setAllLists(tmpLists);
   };
 
   const handleCreateTodo = (text) => {
@@ -47,8 +52,8 @@ function App() {
     };
     setAllTodos([...allTodos, newTodo]);
     setTodos([...todos, newTodo]);
-   addToListCount(listIdx,1);
 
+    addToListCount(listIdx, 1);
   };
 
   const handleUpdateTodo = (id, data) => {
@@ -65,10 +70,9 @@ function App() {
     setTodos(tmpTodos.filter((t) => t.listId === updatedTodo.listId));
 
     const isTodoStatusChanged = preTodo.done !== updatedTodo.done;
-    if(isTodoStatusChanged){
-     addToListCount(listIdx,preTodo.done ? 1 : -1)
+    if (isTodoStatusChanged) {
+      addToListCount(listIdx, preTodo.done ? 1 : -1);
     }
-
   };
 
   const handleDeleteTodo = (id) => {
@@ -82,12 +86,6 @@ function App() {
     addToListCount(listIdx, todo.done ? 0 : -1);
   };
 
-  const addToListCount = (listIdx, num) => {
-    const tmpLists = [...allLists];
-    tmpLists[listIdx] = {...tmpLists[listIdx]};
-    tmpLists[listIdx].undone_count += num;
-    setAllLists(tmpLists);
-  }
   return (
     <Layout>
       <LeftCol>
@@ -103,14 +101,14 @@ function App() {
         {listIdx === -1 ? (
           <NoListView />
         ) : (
-          <>
-            <TodoList todos={todos} onTodoUpdate={handleUpdateTodo} onTodoDelete={handleDeleteTodo}/>
-            <TodoCreator onCreate={handleCreateTodo} />
-          </>
+          <ListView
+            todos={todos}
+            onTodoCreate={handleCreateTodo}
+            onTodoDelete={handleDeleteTodo}
+            onTodoUpdate={handleUpdateTodo}
+          />
         )}
       </RightCol>
     </Layout>
   );
 }
-
-export default App;
