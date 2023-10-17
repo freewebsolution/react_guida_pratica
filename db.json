@@ -1,0 +1,24 @@
+{
+  "user": [
+    {
+      "id": 1,
+      "name": "Lucio",
+      "image": "https://github.com/freewebsolution.png"
+    }
+  ],
+  "lists": [
+    {
+      "name": "Posti da vedere",
+      "id": "55919333-451f-4576-91c1-459f757e69ac",
+      "undone_count": 1
+    }
+  ],
+  "todos": [
+    {
+      "listId": "55919333-451f-4576-91c1-459f757e69ac",
+      "text": "Calabria",
+      "done": false,
+      "id": 2
+    }
+  ]
+}

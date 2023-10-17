@@ -1,141 +1,178 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Layout, { LeftCol, RightCol } from "./components/Layout";
 import ListNames from "./components/ListNames";
 import User from "./components/User";
-import { v4 as uuid } from "uuid";
 import { NoListView } from "./components/NoListView";
 import ListView from "./components/ListView";
-import '../src/assets/css/master.css';
-import NewListButton from "./components/NewListButton";
-
-const user = {
-  id: 1,
-  name: "Lucio",
-  image: "https://github.com/freewebsolution.png",
-};
-
-const initialLists = [
-  { id: 1, name: "Importante", undone_count: 0 },
-  { id: 2, name: "Film da vedere", undone_count: 2 },
-  { id: 3, name: "Libri da leggere", undone_count: 0 },
-];
-
-const initialTodos = [
-  { listId: 2, id: 1, done: false, text: "Prima attività" },
-  { listId: 2, id: 2, done: true, text: "Seconda attività" },
-  { listId: 2, id: 3, done: false, text: "Terza attività" },
-];
+import  NewListButton  from "./components/NewListButton";
+import { deleteData, getData, patchData, postData } from "./utils";
+import ReactModal from "react-modal";
+import ErrorModal from "./components/ErrorModal";
+import { v4 as uuidv4 } from 'uuid';
 
 export default function App() {
-  const [allLists, setAllLists] = useState(initialLists);
-  const [allTodos, setAllTodos] = useState(initialTodos);
+  const [user, setUser] = useState({});
+  const [lists, setLists] = useState([]);
   const [listIdx, setListIdx] = useState(-1);
   const [todos, setTodos] = useState([]);
+  const [error, setError] = useState(false);
+
+  useEffect(() => {
+    getData("/user").then((retUser) => setUser(retUser));
+    getData("/lists").then((retLists) => setLists(retLists));
+  }, []);
 
   const selectListByIdx = (idx) => {
     setListIdx(idx);
-    setTodos(allTodos.filter((t) => t.listId === allLists[idx].id));
+    const listId = lists[idx].id;
+    getData(`/todos?listId=${listId}`).then((retTodos) => {
+      setTodos(retTodos);
+    });
   };
 
   const addToListCount = (listIdx, num) => {
-    const tmpLists = [...allLists];
+    const tmpLists = [...lists];
     tmpLists[listIdx] = { ...tmpLists[listIdx] };
     tmpLists[listIdx].undone_count += num;
-    setAllLists(tmpLists);
+    setLists(tmpLists);
   };
 
   const handleCreateTodo = (text) => {
-    const newTodo = {
-      listId: allLists[listIdx].id,
-      id: uuid(),
-      done: false,
-      text: text,
-    };
-    setAllTodos([...allTodos, newTodo]);
-    setTodos([...todos, newTodo]);
-
-    addToListCount(listIdx, 1);
+    const listId = lists[listIdx].id;
+    postData(`/todos`, { listId, text, done: false }).then((newTodo) => {
+      setTodos([newTodo, ...todos]);
+      addToListCount(listIdx, 1);
+  
+      // Incrementa undone_count nel server JSON
+      const updatedList = { ...lists[listIdx] };
+      updatedList.undone_count += 1;
+      patchData(`/lists/${updatedList.id}`, updatedList);
+    }).catch((e) =>
+      setError(`Errore durante la creazione dell'attività: ${e.status}`)
+    );
   };
+  
 
   const handleUpdateTodo = (id, data) => {
-    const todoIdx = allTodos.findIndex((t) => t.id === id);
-    const preTodo = allTodos[todoIdx];
-    const updatedTodo = {
-      ...preTodo,
-      ...data,
-    };
-
-    const tmpTodos = [...allTodos];
-    tmpTodos[todoIdx] = updatedTodo;
-    setAllTodos(tmpTodos);
-    setTodos(tmpTodos.filter((t) => t.listId === updatedTodo.listId));
-
-    const isTodoStatusChanged = preTodo.done !== updatedTodo.done;
-    if (isTodoStatusChanged) {
-      addToListCount(listIdx, preTodo.done ? 1 : -1);
-    }
+    const todoIdx = todos.findIndex((t) => t.id === id);
+    const preTodo = todos[todoIdx];
+  
+    patchData(`/todos/${id}`, data).then((patchedTodo) => {
+      const tmpTodos = [...todos];
+      tmpTodos[todoIdx] = patchedTodo;
+      setTodos(tmpTodos);
+  
+      const isTodoStatusChanged = preTodo.done !== patchedTodo.done;
+  
+      // Aggiorna undone_count nel server JSON e nello stato React
+      if (isTodoStatusChanged) {
+        const listIdx = lists.findIndex((l) => l.id === patchedTodo.listId);
+        addToListCount(listIdx, preTodo.done ? 1 : -1);
+  
+        // Aggiorna undone_count nel server JSON
+        const updatedList = { ...lists[listIdx] };
+        if (preTodo.done) {
+          updatedList.undone_count += 1;
+        } else {
+          updatedList.undone_count -= 1;
+        }
+        patchData(`/lists/${updatedList.id}`, updatedList);
+      }
+    });
   };
+  
 
   const handleDeleteTodo = (id) => {
-    const todoIdx = todos.findIndex((t) => t.id === id);
-    const todo = todos[todoIdx];
+    deleteData(`/todos/${id}`).then(() => {
+      // Decrementa undone_count nel server JSON
+      const todoIdx = todos.findIndex((t) => t.id === id);
+      const todo = todos[todoIdx];
+      const listIdx = lists.findIndex((l) => l.id === todo.listId);
+      const updatedList = { ...lists[listIdx] };
+      if (!todo.done) {
+        updatedList.undone_count -= 1;
+        patchData(`/lists/${updatedList.id}`, updatedList);
+      }
+  
+      const tmpTodos = [...todos];
+      tmpTodos.splice(todoIdx, 1);
+      setTodos(tmpTodos);
+  
+      addToListCount(listIdx, todo.done ? 0 : -1);
+    });
+  };
+  
+  
+  
 
-    const tmpTodos = [...todos];
-    tmpTodos.splice(todoIdx, 1);
-    setTodos(tmpTodos);
-
-    addToListCount(listIdx, todo.done ? 0 : -1);
+  const handleCreateList = () => {
+    const newList = {
+      name: "Nuova elenco",
+      id: uuidv4(), // Genera un nuovo UUID per la lista
+      undone_count:0
+    };
+  
+    postData("/lists", newList).then((newList) => {
+      setLists([...lists, newList]);
+      setListIdx(lists.length);
+      setTodos([]);
+    });
   };
 
-  const handlecreateList = () => {
-    const newList = {id:uuid(), name:"Nuovo elenco",undone_count:0};
-    setAllLists([...allLists,newList]);
-    setListIdx(allLists.length);
-  }
+  const handleDeleteList = (id) => {
+    deleteData(`/lists/${id}`).then((deletedList) => {
+      const listIdx = lists.findIndex((l) => l.id === id);
 
-  const handleDeleteList =(id) => {
-    const listIdx = allLists.findIndex((l) => l.id === id);
-    const tmpLists = [...allLists];
-    tmpLists.splice(listIdx,1);
-    setAllLists(tmpLists);
-    setListIdx(-1);
-  }
+      const tmpLists = [...lists];
+      tmpLists.splice(listIdx, 1);
+      setLists(tmpLists);
 
-  const handleUpdatelistName = (id,name) => {
-    const listIdx = allLists.findIndex((l)=> l.id === id);
-    const tmpLists = [...allLists];
-    tmpLists[listIdx].name = name;
-    setAllLists(tmpLists);
-  }
+      setListIdx(-1);
+    });
+  };
+
+  const handleUpdateListName = (id, name) => {
+    patchData(`/lists/${id}`, { name }).then((patchedList) => {
+      const listIdx = lists.findIndex((l) => l.id === id);
+      const tmpLists = [...lists];
+      tmpLists[listIdx] = patchedList;
+      setLists(tmpLists);
+    });
+  };
 
   return (
-    <Layout>
-      <LeftCol>
-        <User name={user.name} image={user.image}>
-        <NewListButton onCreateList={handlecreateList}/>
-        </User>
-        <hr />
-        <ListNames
-          lists={allLists}
-          selectedListIdx={listIdx}
-          onListClick={selectListByIdx}
-        />
-      </LeftCol>
-      <RightCol>
-        {listIdx === -1 ? (
-          <NoListView />
-        ) : (
-          <ListView
-            list={allLists[listIdx]}
-            todos={todos}
-            onTodoCreate={handleCreateTodo}
-            onTodoDelete={handleDeleteTodo}
-            onTodoUpdate={handleUpdateTodo}
-            onListDelete={handleDeleteList}
-            onListNameUpdate={handleUpdatelistName}
+    <>
+      <ReactModal isOpen={Boolean(error)}>
+        <ErrorModal message={error} onConfirm={() => setError(false)} />
+      </ReactModal>
+      <Layout>
+        <LeftCol>
+          <User name={user.name} image={user.image}>
+            <NewListButton onCreateList={handleCreateList} />
+          </User>
+          <hr />
+          <ListNames
+            lists={lists}
+            selectedListIdx={listIdx}
+            onListClick={selectListByIdx}
           />
-        )}
-      </RightCol>
-    </Layout>
+        </LeftCol>
+        <RightCol>
+          {listIdx === -1 ? (
+            <NoListView />
+          ) : (
+            <ListView
+              list={lists[listIdx]}
+              todos={todos}
+              onTodoCreate={handleCreateTodo}
+              onTodoDelete={handleDeleteTodo}
+              onTodoUpdate={handleUpdateTodo}
+              onListDelete={handleDeleteList}
+              onListNameUpdate={handleUpdateListName}
+            />
+          )}
+        </RightCol>
+      </Layout>
+    </>
   );
 }
