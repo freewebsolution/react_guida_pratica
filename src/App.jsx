@@ -9,26 +9,41 @@ import { deleteData, getData, patchData, postData } from "./utils";
 import ReactModal from "react-modal";
 import ErrorModal from "./components/ErrorModal";
 import { v4 as uuidv4 } from 'uuid';
+import './assets/css/master.css';
+
+const apiUrl = 'http://todo-list-api.test/api/rest/v1/';
 
 export default function App() {
-  const [user, setUser] = useState({});
+  const [user, setUser] = useState([]);
   const [lists, setLists] = useState([]);
   const [listIdx, setListIdx] = useState(-1);
   const [todos, setTodos] = useState([]);
   const [error, setError] = useState(false);
 
   useEffect(() => {
-    getData("/user").then((retUser) => setUser(retUser));
-    getData("/lists").then((retLists) => setLists(retLists));
-  }, []);
+    fetch(`${apiUrl}users`)
+      .then((response) => response.json())
+      .then((retUser) => {
+        // Trasforma l'array di utenti in un oggetto unico
+        const userObject = retUser.length > 0 ? retUser[0] : {}; // Se ci sono utenti, usa il primo; altrimenti, un oggetto vuoto
+        setUser(userObject);
+      })
+      .catch((error) => setError(true));
 
+    fetch(`${apiUrl}lists`)
+      .then(response => response.json())
+      .then(retLists => setLists(retLists))
+      .catch(error => setError(true));
+  }, []);
+  
   const selectListByIdx = (idx) => {
     setListIdx(idx);
     const listId = lists[idx].id;
-    getData(`/todos?listId=${listId}`).then((retTodos) => {
+    getData(`${apiUrl}todos/${listId}`).then((retTodos) => {
       setTodos(retTodos);
     });
   };
+  
 
   const addToListCount = (listIdx, num) => {
     const tmpLists = [...lists];
@@ -39,14 +54,14 @@ export default function App() {
 
   const handleCreateTodo = (text) => {
     const listId = lists[listIdx].id;
-    postData(`/todos`, { listId, text, done: false }).then((newTodo) => {
+    postData(`${apiUrl}todos`, { listId, text, done: false }).then((newTodo) => {
       setTodos([newTodo, ...todos]);
       addToListCount(listIdx, 1);
   
       // Incrementa undone_count nel server JSON
       const updatedList = { ...lists[listIdx] };
       updatedList.undone_count += 1;
-      patchData(`/lists/${updatedList.id}`, updatedList);
+      patchData(`${apiUrl}lists/${updatedList.id}`, updatedList);
     }).catch((e) =>
       setError(`Errore durante la creazione dell'attività: ${e.status}`)
     );
@@ -56,8 +71,9 @@ export default function App() {
   const handleUpdateTodo = (id, data) => {
     const todoIdx = todos.findIndex((t) => t.id === id);
     const preTodo = todos[todoIdx];
-  
-    patchData(`/todos/${id}`, data).then((patchedTodo) => {
+
+    console.log(preTodo);
+    patchData(`${apiUrl}todos/${id}`, data).then((patchedTodo) => {
       const tmpTodos = [...todos];
       tmpTodos[todoIdx] = patchedTodo;
       setTodos(tmpTodos);
@@ -66,7 +82,7 @@ export default function App() {
   
       // Aggiorna undone_count nel server JSON e nello stato React
       if (isTodoStatusChanged) {
-        const listIdx = lists.findIndex((l) => l.id === patchedTodo.listId);
+        const listIdx = lists.findIndex((l) => l.id === patchedTodo.lists_id);
         addToListCount(listIdx, preTodo.done ? 1 : -1);
   
         // Aggiorna undone_count nel server JSON
@@ -76,14 +92,14 @@ export default function App() {
         } else {
           updatedList.undone_count -= 1;
         }
-        patchData(`/lists/${updatedList.id}`, updatedList);
+        patchData(`${apiUrl}lists/${updatedList.id}`, updatedList);
       }
     });
   };
   
 
   const handleDeleteTodo = (id) => {
-    deleteData(`/todos/${id}`).then(() => {
+    deleteData(`${apiUrl}todos/${id}`).then(() => {
       // Decrementa undone_count nel server JSON
       const todoIdx = todos.findIndex((t) => t.id === id);
       const todo = todos[todoIdx];
@@ -91,7 +107,7 @@ export default function App() {
       const updatedList = { ...lists[listIdx] };
       if (!todo.done) {
         updatedList.undone_count -= 1;
-        patchData(`/lists/${updatedList.id}`, updatedList);
+        patchData(`${apiUrl}lists/${updatedList.id}`, updatedList);
       }
   
       const tmpTodos = [...todos];
@@ -112,7 +128,7 @@ export default function App() {
       undone_count:0
     };
   
-    postData("/lists", newList).then((newList) => {
+    postData(`${apiUrl}lists`, newList).then((newList) => {
       setLists([...lists, newList]);
       setListIdx(lists.length);
       setTodos([]);
@@ -120,7 +136,7 @@ export default function App() {
   };
 
   const handleDeleteList = (id) => {
-    deleteData(`/lists/${id}`).then((deletedList) => {
+    deleteData(`${apiUrl}lists/${id}`).then((deletedList) => {
       const listIdx = lists.findIndex((l) => l.id === id);
 
       const tmpLists = [...lists];
@@ -132,7 +148,7 @@ export default function App() {
   };
 
   const handleUpdateListName = (id, name) => {
-    patchData(`/lists/${id}`, { name }).then((patchedList) => {
+    patchData(`${apiUrl}lists/${id}`, { name }).then((patchedList) => {
       const listIdx = lists.findIndex((l) => l.id === id);
       const tmpLists = [...lists];
       tmpLists[listIdx] = patchedList;
@@ -146,33 +162,36 @@ export default function App() {
         <ErrorModal message={error} onConfirm={() => setError(false)} />
       </ReactModal>
       <Layout>
-        <LeftCol>
+      <LeftCol>
+        {user && (
           <User name={user.name} image={user.image}>
             <NewListButton onCreateList={handleCreateList} />
           </User>
-          <hr />
-          <ListNames
-            lists={lists}
-            selectedListIdx={listIdx}
-            onListClick={selectListByIdx}
+        )}
+        <hr />
+        <ListNames
+          lists={lists}
+          selectedListIdx={listIdx}
+          onListClick={selectListByIdx}
+        />
+      </LeftCol>
+      <RightCol>
+        {listIdx === -1 ? (
+          <NoListView />
+        ) : (
+          <ListView
+            list={lists[listIdx]}
+            todos={todos}
+            onTodoCreate={handleCreateTodo}
+            onTodoDelete={handleDeleteTodo}
+            onTodoUpdate={handleUpdateTodo}
+            onListDelete={handleDeleteList}
+            onListNameUpdate={handleUpdateListName}
           />
-        </LeftCol>
-        <RightCol>
-          {listIdx === -1 ? (
-            <NoListView />
-          ) : (
-            <ListView
-              list={lists[listIdx]}
-              todos={todos}
-              onTodoCreate={handleCreateTodo}
-              onTodoDelete={handleDeleteTodo}
-              onTodoUpdate={handleUpdateTodo}
-              onListDelete={handleDeleteList}
-              onListNameUpdate={handleUpdateListName}
-            />
-          )}
-        </RightCol>
-      </Layout>
+        )}
+      </RightCol>
+    </Layout>
+    
     </>
   );
 }

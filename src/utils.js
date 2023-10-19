@@ -11,7 +11,7 @@ export async function postData(url = "", data = {}) {
 
 export async function patchData(url = "", data = {}) {
   const response = await fetch(url, {
-    method: "PATCH",
+    method: "PUT",
     headers: {
       "Content-Type": "application/json",
     },
