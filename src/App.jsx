@@ -11,7 +11,7 @@ import ErrorModal from "./components/ErrorModal";
 import { v4 as uuidv4 } from 'uuid';
 import './assets/css/master.css';
 
-const apiUrl = 'http://todo-list-api.test/api/rest/v1/';
+const apiUrl = 'http://todo-app-api.test/api/rest/v1/';
 
 export default function App() {
   const [user, setUser] = useState([]);
